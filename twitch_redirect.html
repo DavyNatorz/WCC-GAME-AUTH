@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Logging in...</title>
+  <style>
+    body {
+      background: #0e0e10;
+      color: #efeff1;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      gap: 16px;
+    }
+    p    { font-size: 1.1rem; color: #adadb8; }
+    small { color: #555; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <p>✓ Logged in! You can close this tab.</p>
+  <small>Returning you to the game...</small>
+  <script>
+    // Parse the token Twitch put in the URL hash
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const token  = params.get("access_token");
+
+    if (token) {
+      // Broadcast the token to any other tab on the same origin listening
+      const channel = new BroadcastChannel("twitch_auth");
+      channel.postMessage({ type: "twitch_token", access_token: token });
+      channel.close();
+    }
+
+    // Close this tab after a short delay so the user sees the confirmation
+    setTimeout(() => window.close(), 1500);
+  </script>
+</body>
+</html>
