@@ -5,38 +5,45 @@
   <title>Logging in...</title>
   <style>
     body {
-      background: #0e0e10;
-      color: #efeff1;
+      background: #0e0e10; color: #efeff1;
       font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      gap: 16px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100vh; margin: 0; gap: 16px;
     }
-    p    { font-size: 1.1rem; color: #adadb8; }
+    p     { font-size: 1.1rem; color: #adadb8; }
     small { color: #555; font-size: 0.8rem; }
   </style>
 </head>
 <body>
-  <p>✓ Logged in! You can close this tab.</p>
+  <p>✓ Logged in! This tab will close automatically.</p>
   <small>Returning you to the game...</small>
   <script>
-    // Parse the token Twitch put in the URL hash
-    const params = new URLSearchParams(window.location.hash.substring(1));
-    const token  = params.get("access_token");
+    var CLIENT_ID = "o0oqihrfbbslq8k8ph7ykcw3souscg";
+    var pollKey   = "wcc_twitch_token_" + CLIENT_ID;
+
+    var params = new URLSearchParams(window.location.hash.substring(1));
+    var token  = params.get("access_token");
 
     if (token) {
-      // Broadcast the token to any other tab on the same origin listening
-      const channel = new BroadcastChannel("twitch_auth");
-      channel.postMessage({ type: "twitch_token", access_token: token });
-      channel.close();
+      // Channel 1: localStorage (works if same origin — won't help here
+      // but costs nothing to try)
+      try {
+        localStorage.setItem(pollKey, JSON.stringify({ token: token, ts: Date.now() }));
+      } catch(e) {}
+
+      // Channel 2: postMessage to opener (the tab that opened this one)
+      // This is the primary channel — works as long as window.opener exists
+      if (window.opener) {
+        window.opener.postMessage(
+          { type: "twitch_token", access_token: token },
+          "*"
+        );
+      }
     }
 
-    // Close this tab after a short delay so the user sees the confirmation
-    setTimeout(() => window.close(), 1500);
+    // Close after short delay so user sees the confirmation
+    setTimeout(function() { window.close(); }, 1500);
   </script>
 </body>
 </html>
